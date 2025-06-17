@@ -1,0 +1,90 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+.container {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    overflow: hidden;
+    max-width: 800px;
+    margin: 0 auto;
+}
+.header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    text-align: center;
+    padding: 20px;
+    font-size: 24px;
+    font-weight: bold;
+}
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.comparison-table th {
+    background: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    padding: 15px 12px;
+    text-align: left;
+    border-bottom: 2px solid #e9ecef;
+}
+.comparison-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: top;
+}
+.comparison-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+.metric-cell {
+    font-weight: 600;
+    color: #495057;
+    background-color: #f8f9fa;
+    width: 25%;
+}
+.device-cell {
+    width: 37.5%;
+}
+.value {
+    font-weight: 600;
+    color: #007bff;
+}
+.description {
+    font-size: 12px;
+    color: #6c757d;
+    font-style: italic;
+}
+.status-good { color: #28a745; }
+.status-moderate { color: #ffc107; }
+.status-unhealthy { color: #fd7e14; }
+.status-dangerous { color: #dc3545; }
+.device-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+.timestamp {
+    font-size: 12px;
+    color: #6c757d;
+}
+.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    margin: 5px 0;
+}
+.icon {
+    margin-right: 5px;
+}
+
+
+

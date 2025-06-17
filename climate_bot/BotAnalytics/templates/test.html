@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Analytics Dashboard</title>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Telegram Bot Analytics</h1>
+        </header>
+
+        <section class="dashboard">
+            <div class="metrics">
+                <div class="metric">
+                    <h2>Total Users</h2>
+                    <p id="total-users">0</p>
+                </div>
+                <div class="metric">
+                    <h2>Active Users</h2>
+                    <p id="active-users">0</p>
+                </div>
+                <div class="metric">
+                    <h2>New Users</h2>
+                    <p id="new-users">0</p>
+                </div>
+                <div class="metric">
+                    <h2>Inactive Users</h2>
+                    <p id="inactive-users">0</p>
+                </div>
+                <div class="metric">
+                    <h2>Engagement Rate</h2>
+                    <p id="engagement-rate">0%</p>
+                </div>
+            </div>
+
+            <div class="charts">
+                <canvas id="activeUsersChart"></canvas>
+                <canvas id="commandUsageChart"></canvas>
+                <canvas id="botUptimeChart"></canvas>
+            </div>
+
+            <div class="activity-metrics">
+                <h3>Activity Metrics</h3>
+                <div class="metric">
+                    <h4>Total Commands</h4>
+                    <p id="total-commands">0</p>
+                </div>
+                <div class="metric">
+                    <h4>Command Usage</h4>
+                    <p id="command-usage">/start: 0, /help: 0</p>
+                </div>
+            </div>
+
+            <div class="performance-metrics">
+                <h3>Performance Metrics</h3>
+                <div class="metric">
+                    <h4>Bot Uptime</h4>
+                    <p id="bot-uptime">0%</p>
+                </div>
+                <div class="metric">
+                    <h4>Response Time</h4>
+                    <p id="response-time">0s</p>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p>Data sourced from Telegram Bot API</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Comparison</title>
+    <link rel="stylesheet" href="comparison.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            📊 DEVICE COMPARISON
+        </div>
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th class="metric-cell">Metric</th>
+                    <th class="device-header">🔹 Device 1: ${device1}</th>
+                    <th class="device-header">🔹 Device 2: ${device2}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="metric-cell">⏰ Timestamp</td>
+                    <td class="device-cell"><div class="timestamp">${timestamp1}</div></td>
+                    <td class="device-cell"><div class="timestamp">${timestamp2}</div></td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">☀️ UV Index</td>
+                    <td class="device-cell">
+                        <div class="value ${uv_status1}">${uv1}</div>
+                        <div class="description">${uv_desc1}</div>
+                    </td>
+                    <td class="device-cell">
+                        <div class="value ${uv_status2}">${uv2}</div>
+                        <div class="description">${uv_desc2}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">🔆 Light Intensity</td>
+                    <td class="device-cell"><div class="value">${lux1} lux</div></td>
+                    <td class="device-cell"><div class="value">${lux2} lux</div></td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">🌡️ Temperature</td>
+                    <td class="device-cell"><div class="value">${temperature1}°C</div></td>
+                    <td class="device-cell"><div class="value">${temperature2}°C</div></td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">💧 Humidity</td>
+                    <td class="device-cell"><div class="value">${humidity1}%</div></td>
+                    <td class="device-cell"><div class="value">${humidity2}%</div></td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">⏲️ Pressure</td>
+                    <td class="device-cell"><div class="value">${pressure1} hPa</div></td>
+                    <td class="device-cell"><div class="value">${pressure2} hPa</div></td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">🫁 PM1.0</td>
+                    <td class="device-cell">
+                        <div class="value ${pm1_status1}">${pm1_1} µg/m³</div>
+                        <div class="description">${pm1_desc1}</div>
+                    </td>
+                    <td class="device-cell">
+                        <div class="value ${pm1_status2}">${pm1_2} µg/m³</div>
+                        <div class="description">${pm1_desc2}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">💨 PM2.5</td>
+                    <td class="device-cell">
+                        <div class="value ${pm2_5_status1}">${pm2_5_1} µg/m³</div>
+                        <div class="description">${pm2_5_desc1}</div>
+                    </td>
+                    <td class="device-cell">
+                        <div class="value ${pm2_5_status2}">${pm2_5_2} µg/m³</div>
+                        <div class="description">${pm2_5_desc2}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">🌫️ PM10</td>
+                    <td class="device-cell">
+                        <div class="value ${pm10_status1}">${pm10_1} µg/m³</div>
+                        <div class="description">${pm10_desc1}</div>
+                    </td>
+                    <td class="device-cell">
+                        <div class="value ${pm10_status2}">${pm10_2} µg/m³</div>
+                        <div class="description">${pm10_desc2}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">🌪️ Wind Speed</td>
+                    <td class="device-cell"><div class="value">${wind_speed1} m/s</div></td>
+                    <td class="device-cell"><div class="value">${wind_speed2} m/s</div></td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">🌧️ Rainfall</td>
+                    <td class="device-cell"><div class="value">${rain1} mm</div></td>
+                    <td class="device-cell"><div class="value">${rain2} mm</div></td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">🧭 Wind Direction</td>
+                    <td class="device-cell"><div class="value">${wind_direction1}</div></td>
+                    <td class="device-cell"><div class="value">${wind_direction2}</div></td>
+                </tr>
+                <tr>
+                    <td class="metric-cell">🔍 Weather Conditions</td>
+                    <td class="device-cell">
+                        <div class="value">${weather_condition1}</div>
+                        ${issues1}
+                    </td>
+                    <td class="device-cell">
+                        <div class="value">${weather_condition2}</div>
+                        ${issues2}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+
+

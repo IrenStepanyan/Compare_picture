@@ -1,0 +1,426 @@
+{% extends "admin/change_list.html" %}
+{% comment %} {% extends 'unfold/layouts/base.html' %} {% endcomment %}
+
+{% comment %} {% extends "admin/base_site.html" %} {% endcomment %}
+{% block content %}
+<div class="dropdown">
+    <button class="btn btn-secondary btn-md rounded-pill shadow-sm" type="button" id="dropdownMenuButton" aria-haspopup="true" aria-expanded="false" onclick="toggleDropdown()">
+        Location Analytics Dashboard
+    </button>
+    <div class="dropdown-menu" id="dropdownMenu" aria-labelledby="dropdownMenuButton">
+        <!-- Add the content of the super block inside the dropdown -->
+        <div class="dropdown-item">
+            {{ block.super }}
+        </div>
+    </div>
+</div>
+{% comment %} <h1>Analytics Dashboard</h1> {% endcomment %}
+<div class="tab-buttons">
+    <button class="tab-button active" id="dailyTab">Daily</button>
+    <button class="tab-button" id="weeklyTab">Weekly</button>
+    <button class="tab-button" id="yearlyTab">Yearly</button>
+</div>
+
+<!-- Province Chart -->
+ {% comment %} test {% endcomment %}
+<div style="">
+    <h3 id="provinceChartTitle">Daily Chart - Provinces</h3>
+    <canvas style="width:100%;" id="provinceChart"></canvas>
+</div>
+
+<!-- Device Chart -->
+<div style="margin: 20px auto;">
+    <h3 id="deviceChartTitle">Devices in Selected Province</h3>
+    <canvas id="deviceChart"></canvas>
+</div>
+
+<!-- Data Selection Section -->
+<div class="data-selection">
+    <h3>Select Date Range & Province</h3>
+    <div class="input-group">
+        <label for="startDate">Start Date</label>
+        <input type="date" id="startDate" name="startDate">
+    </div>
+    <div class="input-group">
+        <label for="endDate">End Date</label>
+        <input type="date" id="endDate" name="endDate">
+    </div>
+    <div class="input-group">
+        <label for="provinceSelect">Province</label>
+        <select id="provinceSelect">
+            <!-- Provinces will be populated dynamically -->
+        </select>
+    </div>
+    <button id="downloadCsvBtn">Download CSV</button>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let currentTab = 'daily'; // Default tab
+    let deviceChartInstance = null;
+    let provinceChartInstance = null;
+
+    const fetchAnalyticsData = async (province = null, timeRange = 'daily', startDate = '', endDate = '') => {
+        const url = new URL('/bot/BotAnalytics/locationsanalytics/analytics-data/', window.location.origin);
+        
+        // Append query parameters if they exist
+        if (startDate) url.searchParams.append('startDate', startDate);
+        if (endDate) url.searchParams.append('endDate', endDate);
+        if (province) url.searchParams.append('province', province);
+        url.searchParams.append('timeRange', timeRange);
+    
+        const response = await fetch(url);
+        return await response.json();
+    };
+
+    const renderProvinceChart = (data, timeRange) => {
+        const ctx = document.getElementById('provinceChart').getContext('2d');
+        const labels = data.map(item => item.device_province);
+        const values = data.map(item => item.count);
+
+        if (provinceChartInstance) {
+            provinceChartInstance.destroy();
+        }
+
+        document.getElementById('provinceChartTitle').textContent = `${capitalize(timeRange)} Chart - Provinces`;
+
+        provinceChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Provinces',
+                    data: values,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    barThickness: 40,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: { label: (tooltipItem) => `Usage: ${tooltipItem.raw}` }
+                    }
+                },
+                onClick: async (e, elements) => {
+                    if (elements.length > 0) {
+                        const clickedIndex = elements[0].index;
+                        const selectedProvince = labels[clickedIndex];
+                        const response = await fetchAnalyticsData(selectedProvince, currentTab);
+                        renderDeviceChart(response.device_data, currentTab, selectedProvince);
+                    }
+                }
+            }
+        });
+    };
+
+    const renderDeviceChart = (data, timeRange, province) => {
+        const ctx = document.getElementById('deviceChart').getContext('2d');
+        const labels = data.map(item => item.device_name);
+        const values = data.map(item => item.count);
+
+        if (deviceChartInstance) {
+            deviceChartInstance.destroy();
+        }
+
+        document.getElementById('deviceChartTitle').textContent = `${capitalize(timeRange)} Chart - Devices in ${province || 'All Provinces'}`;
+
+        deviceChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Devices',
+                    data: values,
+                    backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1,
+                    barThickness: 15,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true },
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: { label: (tooltipItem) => `Count: ${tooltipItem.raw}` }
+                    }
+                }
+            }
+        });
+    };
+
+    const tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            const timeRange = button.id.replace('Tab', '').toLowerCase();
+            currentTab = timeRange;
+
+            const response = await fetchAnalyticsData(null, timeRange);
+            renderProvinceChart(response.province_data, timeRange);
+            renderDeviceChart(response.device_data, timeRange);
+        });
+    });
+
+    const downloadCsv = async () => {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const province = document.getElementById('provinceSelect').value;
+
+        const response = await fetchAnalyticsData(province, currentTab, startDate, endDate);
+        const data = response.device_data;
+
+        const csv = convertToCsv(data);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'analytics_data.csv');
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    const convertToCsv = (data) => {
+        const header = ['Device Name', 'Count'];
+        const rows = data.map(item => [item.device_name, item.count]);
+
+        let csvContent = header.join(',') + '\n';
+        rows.forEach(row => {
+            csvContent += row.join(',') + '\n';
+        });
+
+        return csvContent;
+    };
+
+    document.getElementById('downloadCsvBtn').addEventListener('click', downloadCsv);
+
+    const capitalize = (str) => str.charAt(0).toUpperCase() + str.slice(1);
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const response = await fetchAnalyticsData(null, currentTab);
+
+        // Extract provinces from the fetched analytics data
+        const provinces = [...new Set(response.province_data.map(item => item.device_province))]; // Get unique provinces
+
+        const provinceSelect = document.getElementById('provinceSelect');
+        provinceSelect.innerHTML = '<option value="">All Provinces</option>';
+        
+        // Populate the province dropdown dynamically
+        provinces.forEach(province => {
+            const option = document.createElement('option');
+            option.value = province;
+            option.textContent = province;
+            provinceSelect.appendChild(option);
+        });
+
+        renderProvinceChart(response.province_data, currentTab);
+        renderDeviceChart(response.device_data, currentTab);
+    });
+</script>
+<script>
+    // Function to toggle dropdown visibility
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    dropdownMenu.style.display = 'none' 
+    function toggleDropdown() {
+        dropdownMenu.style.display = (dropdownMenu.style.display === 'none' || dropdownMenu.style.display === '') ? 'block' : 'none';
+    }
+
+    // Hide the dropdown if clicked outside
+    document.addEventListener('click', function(event) {
+        const dropdownButton = document.getElementById('dropdownMenuButton');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+        
+        if (!dropdownButton.contains(event.target) && !dropdownMenu.contains(event.target)) {
+            dropdownMenu.style.display = 'none';
+        }
+    });
+</script>
+<style>
+    /* Global Styles */
+    body {
+        font-family: 'Poppins', sans-serif;
+        {% comment %} background: #f4f7f9; {% endcomment %}
+        color: #333;
+        margin: 0;
+        padding: 20px;
+    }
+    
+    /* Full-width Dropdown Button */
+    .dropdown {
+        width: 100%;
+  
+    }
+    
+    .dropdown button {
+        {% comment %} width: 80%; {% endcomment %}
+        {% comment %} background: #007bff; {% endcomment %}
+        border: none;
+        font-size: 18px;
+        font-weight: bold;
+        color: #fff;
+        padding: 12px;
+        border-radius: 50px;
+        transition: all 0.3s ease-in-out;
+        {% comment %} box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); {% endcomment %}
+    }
+    
+  
+    
+
+  
+    
+    /* Tab Buttons */
+    .tab-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .tab-button {
+        background: #28a745;
+        border: none;
+        padding: 10px 18px;
+        font-size: 16px;
+        font-weight: bold;
+        color: white;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+    }
+    
+    .tab-button.active {
+        background: #006d2f;
+    }
+    
+    .tab-button:hover {
+        background: #1e7e34;
+    }
+    
+    /* Full-Width Charts */
+    #provinceChartTitle,
+    #deviceChartTitle {
+        text-align: center;
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #ffffff;
+    }
+    
+    canvas {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 500px;
+        display: block;
+        margin: auto;
+        {% comment %} background: #ffffff; {% endcomment %}
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom:30px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Data Selection Card */
+    .data-selection {
+        width: 100%;
+        max-width: 600px;
+        {% comment %} background: white; {% endcomment %}
+        padding: 25px;
+        border-radius: 12px;
+        margin: 30px auto;
+        text-align: center;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        {% comment %} border-left: 5px solid #007bff; {% endcomment %}
+    }
+    
+    /* Section Title */
+    .data-selection h3 {
+        font-size: 22px;
+        font-weight: bold;
+        color:white;
+        margin-bottom: 20px;
+    }
+    
+    /* Input Group */
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .input-group label {
+        font-size: 16px;
+        font-weight: bold;
+        color: #ffffff;
+        margin-bottom: 5px;
+    }
+    
+    .input-group input,
+    .input-group select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        {% comment %} background: #f8f9fa; {% endcomment %}
+        font-size: 16px;
+        color:black;
+        transition: all 0.3s ease;
+    }
+    
+    .input-group input:focus,
+    .input-group select:focus {
+        {% comment %} border-color: #007bff; {% endcomment %}
+        {% comment %} background: white; {% endcomment %}
+        outline: none;
+        box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+    }
+    
+    /* Download CSV Button */
+    #downloadCsvBtn {
+        width: 100%;
+        background: #007bff;
+        border: none;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        padding: 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+        margin-top: 15px;
+        box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2);
+    }
+    
+    #downloadCsvBtn:hover {
+        background: #0056b3;
+        box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3);
+    }
+    
+    
+    
+
+</style>
+{% endblock %}
+

@@ -1,0 +1,221 @@
+{% comment %} {% extends 'unfold/layouts/base.html' %} {% endcomment %}
+{% comment %} {% extends "admin/base_site.html" %} {% endcomment %}
+{% load i18n unfold %}
+{% load static %}
+{% block content %}
+{% block breadcrumbs %} {% endblock %}
+<div class="module">
+    <h2>📩 Send Message to Selected Users</h2>
+    <p>You have selected <strong>{{ users|length }}</strong> user(s).</p>
+
+    <!-- Status Message Block -->
+    <div id="messageStatus" class="hidden"></div>
+
+    <form id="sendMessageForm" class="form-group">
+        {% csrf_token %}
+
+        <div class="form-row">
+            <label for="id_message"><strong>Message:</strong></label>
+            {{ form.message }}
+        </div>
+
+        <fieldset class="module">
+            <legend>📋 Selected Users</legend>
+            <ul class="selected-users">
+                {% for user in users %}
+                    <li>
+                        <input type="checkbox" name="user_ids" value="{{ user.id }}" checked>
+                        <strong>{{ user.first_name }} {{ user.last_name }}</strong> 
+                        <span class="muted">({{ user.telegram_id }})</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </fieldset>
+
+        <div class="form-buttons">
+            <button type="button" id="sendMessageButton" class="button button-primary">🚀 Send Message</button>
+            <a href="{% url 'admin:users_telegramuser_changelist' %}" class="button cancel-link">❌ Cancel</a>
+        </div>
+    </form>
+</div>
+
+<style>
+/* Light/Dark Mode Friendly Colors */
+:root {
+    --bg-light: #fff;
+    --bg-dark: #1e1e1e;
+    --text-light: #000;
+    --text-dark: #e0e0e0;
+    --border-light: #ddd;
+    --border-dark: #444;
+    --input-bg-light: #f9f9f9;
+    --input-bg-dark: #2b2b2b;
+    --muted-light: #777;
+    --muted-dark: #bbb;
+    --success-light: #d4edda;
+    --success-dark: #0f5132;
+    --fail-light: #f8d7da;
+    --fail-dark: #842029;
+}
+body{
+    width:100%;
+    marging:0!important;
+    background:var(--bg-dark)
+}
+
+/* Detect Dark Mode */
+@media (prefers-color-scheme: dark) {
+    body {
+        --bg-light: var(--bg-dark);
+        --text-light: var(--text-dark);
+        --border-light: var(--border-dark);
+        --input-bg-light: var(--input-bg-dark);
+        --muted-light: var(--muted-dark);
+        --success-light: var(--success-dark);
+        --fail-light: var(--fail-dark);
+    }
+}
+
+/* Main Container */
+.module {
+    background: var(--bg-light);
+    {% comment %} width:100%; {% endcomment %}
+    height:100%;
+    color: var(--text-light);
+    padding: 20px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+/* Status Message Block */
+#messageStatus {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    display: none;
+    font-weight: bold;
+}
+.status-success {
+    background: var(--success-light);
+    color:rgb(255, 255, 255);
+    border: 1px solid #c3e6cb;
+}
+.status-fail {
+    background: var(--fail-light);
+    color:rgb(249, 249, 249);
+    border: 1px solid #f5c6cb;
+}
+
+/* Form Elements */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.form-row label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.selected-users {
+    list-style: none;
+    padding: 0;
+}
+.selected-users li {
+    padding: 8px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.selected-users li:last-child {
+    border-bottom: none;
+}
+.muted {
+    color: var(--muted-light);
+    font-size: 0.9em;
+}
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+.button {
+    padding: 10px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    font-weight: bold;
+}
+.button-primary {
+    background: #007bff;
+    color: white;
+    border: 1px solid #0056b3;
+}
+.button-primary:hover {
+    background: #0056b3;
+}
+.cancel-link {
+    background: #dc3545;
+    color: white;
+    border: 1px solid #a71d2a;
+}
+.cancel-link:hover {
+    background: #a71d2a;
+}
+</style>
+
+<script>
+document.getElementById("sendMessageButton").addEventListener("click", function () {
+    const form = document.getElementById("sendMessageForm");
+    const formData = new FormData(form);
+    const messageStatus = document.getElementById("messageStatus");
+
+    const selectedUsers = Array.from(document.querySelectorAll('input[name="user_ids"]:checked'))
+                               .map(el => el.value);
+
+    if (selectedUsers.length === 0) {
+        messageStatus.textContent = "⚠️ Please select at least one user.";
+        messageStatus.className = "status-fail";
+        messageStatus.style.display = "block";
+        return;
+    }
+
+    formData.append("user_ids", JSON.stringify(selectedUsers));
+
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch("/bot/users/telegramuser/hello/", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": csrfToken,
+            "X-Requested-With": "XMLHttpRequest"
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data?.success)
+        if(data.success)
+        {
+            messageStatus.textContent = `✅ ${data.message}`;
+            messageStatus.className = "status-success";
+            messageStatus.style.display = "block";
+        }
+        else
+           {
+            messageStatus.textContent = `✅ ${data.message}`;
+            messageStatus.className = "status-fail";
+            messageStatus.style.display = "block";
+           }
+    })
+    .catch(error => {
+
+        console.error("Error:", error);
+    });
+});
+</script>
+
+{% endblock %}

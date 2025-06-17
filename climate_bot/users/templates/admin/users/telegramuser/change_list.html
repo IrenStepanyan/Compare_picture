@@ -1,0 +1,57 @@
+{% extends "admin/change_list.html" %}
+
+{% block content %}
+    {% comment %} <div class="chart-container" style="margin: 20px 0;">
+        <div style="margin-bottom: 10px;">
+            <!-- Buttons for selecting data range -->
+            <button class="chart-btn" data-range="hourly">Hourly</button>
+            <button class="chart-btn" data-range="daily">Daily</button>
+            <button class="chart-btn" data-range="weekly">Weekly</button>
+        </div>
+        <canvas id="usersChart" width="400" height="100"></canvas>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Parse the initial chart data from Django
+        const chartData = JSON.parse('{{ chart_data|escapejs }}');
+
+        // Get canvas context
+        const ctx = document.getElementById('usersChart').getContext('2d');
+
+        // Create the Chart.js chart
+        const usersChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.daily.labels,
+                datasets: [{
+                    label: 'Users Joined',
+                    data: chartData.daily.counts,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Event listener for buttons
+        document.querySelectorAll('.chart-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const range = this.getAttribute('data-range');
+
+                // Update chart data based on the selected range
+                usersChart.data.labels = chartData[range].labels;
+                usersChart.data.datasets[0].data = chartData[range].counts;
+                usersChart.update();
+            });
+        });
+    </script> {% endcomment %}
+    {{ block.super }}
+{% endblock %}
