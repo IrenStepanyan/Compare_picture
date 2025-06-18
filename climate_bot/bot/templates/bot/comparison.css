@@ -10,7 +10,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     overflow: hidden;
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0 auto;
 }
 .header {
@@ -46,10 +46,10 @@ body {
     font-weight: 600;
     color: #495057;
     background-color: #f8f9fa;
-    width: 25%;
+    width: 20%;
 }
 .device-cell {
-    width: 37.5%;
+    width: auto;
 }
 .value {
     font-weight: 600;
