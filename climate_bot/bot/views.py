@@ -13,7 +13,7 @@ import django
 from django.conf import settings
 from users.utils import save_telegram_user, save_users_locations
 from BotAnalytics.views import log_command_decorator, save_selected_device_to_db
-import imgkit
+from playwright.sync_api import sync_playwright
 import uuid
 from string import Template
 import math
@@ -290,8 +290,14 @@ def send_comparison_image(chat_id, html_content):
         
         # Convert HTML to image
         temp_image_path = f"temp_comparison_{uuid.uuid4()}.png"
-        imgkit.from_file(temp_html_path, temp_image_path, options={'format': 'png', 'width': 800})
-        
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page = browser.new_page()
+            pago.goto(f"file://{os.path.abspath(temp_html_path)}")
+            page.wait_for_timeout(500)
+            page.screenshot(path=temp_image_path, full_page = True)
+            browser.close()
+
         # Send image to Telegram
         with open(temp_image_path, 'rb') as photo:
             bot.send_photo(chat_id, photo)
