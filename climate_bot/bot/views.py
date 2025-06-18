@@ -208,13 +208,30 @@ def get_comparison_formatted_data(measurement1, device1, measurement2, device2):
     # Load HTML template
     base_dir = os.path.dirname(os.path.abspath(__file__))
     template_path = os.path.join(base_dir, 'templates','bot', 'comparison.html')
+    css_path = os.path.join(base_dir, 'templates', 'bot', 'comparison.css')
     try:
         print("temo_path", template_path)
+        print("css_path ", css_path)
+
+        if not os.path.exists(template_path):
+            print("Error html")
+            return None 
+
+        if not os.path.exists(css_path):
+            print("Error CSS")
+            return None
+
         with open(template_path, 'r', encoding='utf-8') as f:
-            template = Template(f.read())
+            html_content = f.read()
+        html_content = html_content.replace('CSS_PATH_PLACEHOLDER', os.path.abspath(css_path))
+
+        template = Template(html_content)
+
     except FileNotFoundError:
         print(f"Error: {template_path} not found")
         return None
+    except Exception as e:
+        print(f"reading temp: {e}")
 
     # Prepare data for template substitution
     template_data = {
@@ -276,27 +293,29 @@ def send_comparison_image(chat_id, html_content):
     if html_content is None:
         bot.send_message(chat_id, "⚠️ Error generating comparison table. Please try again.")
         return
+    temp_html_path = None
+    temp_image_path = None
+
     try:
         # Save HTML to a temporary file
         temp_html_path = f"temp_comparison_{uuid.uuid4()}.html"
         with open(temp_html_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-        
-        # Check if CSS file exists
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        css_path = os.path.join(base_dir, 'templates','bot', 'comparison.css')
-        if not os.path.exists(css_path):
-            raise FileNotFoundError(f"CSS file {css_path} not found")
-        
-        # Convert HTML to image
+
         temp_image_path = f"temp_comparison_{uuid.uuid4()}.png"
+        print(f" Creating a temp image file: {temp_image_path}")
+        
+        
         with sync_playwright() as p:
             browser = p.chromium.launch()
             page = browser.new_page()
-            pago.goto(f"file://{os.path.abspath(temp_html_path)}")
-            page.wait_for_timeout(500)
+            page.goto(f"file://{os.path.abspath(temp_html_path)}")
+            page.wait_for_timeout(2000)
             page.screenshot(path=temp_image_path, full_page = True)
             browser.close()
+
+        if not os.path.exists(temp_image_path):
+            raise Exception("Screemshot file not created")
 
         # Send image to Telegram
         with open(temp_image_path, 'rb') as photo:
