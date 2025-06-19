@@ -274,7 +274,7 @@ def get_comparison_formatted_data(devices, measurements):
 
 
     # Load HTML template
-    template_path = os.path.join(settings.BASE_DIR, 'templates', 'comparison.html')
+    template_path = os.path.join(settings.BASE_DIR,'bot', 'templates','bot', 'comparison.html')
     logger.debug(f"Template path: {os.path.abspath(template_path)}, Exists: {os.path.exists(template_path)}")
     try:
         with open(template_path, 'r', encoding='utf-8') as f:
@@ -362,7 +362,7 @@ async def render_html_to_image(html_content, output_path):
             temp_html_path = f"temp_comparison_{uuid.uuid4()}.html"
             with open(temp_html_path, 'w', encoding='utf-8') as f:
                 f.write(html_content)
-            css_path = os.path.join(settings.BASE_DIR, 'static', 'comparison.css')
+            css_path = os.path.join(settings.BASE_DIR, 'bot', 'templates', 'bot', 'comparison.css')
             logger.debug(f"CSS path: {os.path.abspath(css_path)}, Exists: {os.path.exists(css_path)}")
             if not os.path.exists(css_path):
                 raise FileNotFoundError(f"CSS file {css_path} not found")
@@ -379,7 +379,40 @@ async def render_html_to_image(html_content, output_path):
     except Exception as e:
         logger.error(f"Playwright rendering error: {e}")
         raise
+#BRO IDK WHAT IS THIS 
+def inline_css_into_html(html, css_path):
+    with open(css_path, 'r', encoding='utf-8') as f:
+        css = f.read()
+    return html.replace('<link rel="stylesheet" href="INLINE_CSS_HERE">', f"<style>{css}</style>")
 
+"""def send_comparison_image(chat_id, html_content):
+    if html_content is None:
+        logger.error("HTML content is None")
+        bot.send_message(chat_id, "⚠️ Error generating comparison table. Please try again.")
+        return
+    try:
+        # 🔧 FIX: Set a new event loop because we're in a worker thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        temp_image_path = f"temp_comparison_{uuid.uuid4()}.png"
+        loop.run_until_complete(render_html_to_image(html_content, temp_image_path))
+
+        # Send image to Telegram
+        with open(temp_image_path, 'rb') as photo:
+            bot.send_photo(chat_id, photo)
+
+        # Clean up temporary file
+        os.remove(temp_image_path)
+        logger.debug(f"Image sent and temporary file {temp_image_path} removed")
+
+    except FileNotFoundError as e:
+        logger.error(f"File error: {e}")
+        bot.send_message(chat_id, "⚠️ CSS file missing. Please contact the administrator.")
+    except Exception as e:
+        logger.error(f"Error generating/sending image: {e}")
+        traceback.print_exc()
+        bot.send_message(chat_id, "⚠️ Error generating comparison image. Please try again.")"""
 
 def send_comparison_image(chat_id, html_content):
     if html_content is None:
@@ -387,19 +420,25 @@ def send_comparison_image(chat_id, html_content):
         bot.send_message(chat_id, "⚠️ Error generating comparison table. Please try again.")
         return
     try:
-        # Run async Playwright in the event loop
+        # Inject CSS before rendering
+        css_path = os.path.join(os.path.dirname(__file__), 'templates', 'bot', 'comparison.css')
+        html_content = inline_css_into_html(html_content, css_path)
+
+        # Set a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
         temp_image_path = f"temp_comparison_{uuid.uuid4()}.png"
-        loop = asyncio.get_event_loop()
         loop.run_until_complete(render_html_to_image(html_content, temp_image_path))
-       
+
         # Send image to Telegram
         with open(temp_image_path, 'rb') as photo:
             bot.send_photo(chat_id, photo)
-       
+
         # Clean up temporary file
         os.remove(temp_image_path)
         logger.debug(f"Image sent and temporary file {temp_image_path} removed")
-       
+
     except FileNotFoundError as e:
         logger.error(f"File error: {e}")
         bot.send_message(chat_id, "⚠️ CSS file missing. Please contact the administrator.")
