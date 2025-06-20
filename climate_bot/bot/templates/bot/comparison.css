@@ -5,6 +5,7 @@ body {
     min-height: 100vh;
     padding: 20px;
 }
+
 .container {
     background: white;
     border-radius: 15px;
@@ -13,6 +14,7 @@ body {
     max-width: 1000px;
     margin: 0 auto;
 }
+
 .header {
     background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     color: white;
@@ -21,11 +23,14 @@ body {
     font-size: 24px;
     font-weight: bold;
 }
+
 .comparison-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+    table-layout: fixed; /* This ensures equal column widths */
 }
+
 .comparison-table th {
     background: #f8f9fa;
     color: #495057;
@@ -33,47 +38,59 @@ body {
     padding: 15px 12px;
     text-align: left;
     border-bottom: 2px solid #e9ecef;
+    width: auto; /* Remove specific width constraints */
 }
+
 .comparison-table td {
     padding: 12px;
     border-bottom: 1px solid #e9ecef;
     vertical-align: top;
+    width: auto; /* Remove specific width constraints */
 }
+
 .comparison-table tbody tr:hover {
     background-color: #f8f9fa;
 }
+
 .metric-cell {
     font-weight: 600;
     color: #495057;
     background-color: #f8f9fa;
-    width: 20%;
+    /* Removed width: 20% to allow equal distribution */
 }
+
 .device-cell {
-    width: auto;
+    /* Removed width: auto to allow equal distribution */
 }
+
 .value {
     font-weight: 600;
     color: #007bff;
 }
+
 .description {
     font-size: 12px;
     color: #6c757d;
     font-style: italic;
 }
+
 .status-good { color: #28a745; }
 .status-moderate { color: #ffc107; }
 .status-unhealthy { color: #fd7e14; }
 .status-dangerous { color: #dc3545; }
+
 .device-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     font-weight: bold;
     text-align: center;
 }
+
 .timestamp {
     font-size: 12px;
     color: #6c757d;
 }
+
 .warning {
     background-color: #fff3cd;
     color: #856404;
@@ -82,9 +99,7 @@ body {
     font-size: 12px;
     margin: 5px 0;
 }
+
 .icon {
     margin-right: 5px;
 }
-
-
-

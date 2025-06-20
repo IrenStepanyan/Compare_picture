@@ -242,7 +242,6 @@ def get_formatted_data(measurement, selected_device):
 🌪️ Wind Speed: {safe_value(measurement.get('wind_speed'), ' m/s')}
 🌧️ Rainfall: {safe_value(measurement.get('rain'), ' mm')}
 🧭 Wind Direction: {safe_value(measurement.get('wind_direction'))}
-🔍 Weather Condition: {detect_weather_condition(measurement)}
 """
 
 
@@ -299,13 +298,12 @@ def get_comparison_formatted_data(devices, measurements):
     wind_speed_row = ""
     rain_row = ""
     wind_direction_row = ""
-    weather_condition_row = ""
 
 
     for idx, (device, measurement) in enumerate(zip(devices, measurements)):
         device_name = device['name']
         issues = '<div class="warning">⚠️ Device has technical issues</div>' if device_name in devices_with_issues else ""
-        device_headers += f'<th class="device-header">🔹 Device {idx + 1}: {device_name}</th>\n'
+        device_headers += f'<th class="device-header">🔹{device_name}</th>\n'
         timestamp_row += f'<td class="device-cell"><div class="timestamp">{safe_value(measurement.get("timestamp"))}</div></td>\n'
         uv_row += f'<td class="device-cell"><div class="value {get_status_class(get_uv_desc(measurement.get("uv")))}">{safe_value(measurement.get("uv"))}</div><div class="description">{get_uv_desc(measurement.get("uv"))}</div></td>\n'
         lux_row += f'<td class="device-cell"><div class="value">{safe_value(measurement.get("lux"))} lux</div></td>\n'
@@ -317,9 +315,8 @@ def get_comparison_formatted_data(devices, measurements):
         pm10_row += f'<td class="device-cell"><div class="value {get_status_class(get_pm_desc(measurement.get("pm10"), "PM10"))}">{safe_value(measurement.get("pm10"))} µg/m³</div><div class="description">{get_pm_desc(measurement.get("pm10"), "PM10")}</div></td>\n'
         wind_speed_row += f'<td class="device-cell"><div class="value">{safe_value(measurement.get("wind_speed"))} m/s</div></td>\n'
         rain_row += f'<td class="device-cell"><div class="value">{safe_value(measurement.get("rain"))} mm</div></td>\n'
-        wind_direction_row += f'<td class="device-cell"><div class="value">{safe_value(measurement.get("wind_direction"))}</div></td>\n'
-        weather_condition_row += f'<td class="device-cell"><div class="value">{detect_weather_condition(measurement)}</div>{issues}</td>\n'
-
+        wind_direction_row += f'<td class="device-cell"><div class="value">{safe_value(measurement.get("wind_direction"))}</div>{issues}</td>\n'
+        
 
     template_data = {
         'device_headers': device_headers,
@@ -335,7 +332,7 @@ def get_comparison_formatted_data(devices, measurements):
         'wind_speed_row': wind_speed_row,
         'rain_row': rain_row,
         'wind_direction_row': wind_direction_row,
-        'weather_condition_row': weather_condition_row
+        
     }
 
 
@@ -466,17 +463,59 @@ def handle_device_selection(message):
    
     if user_context[chat_id].get('compare_mode'):
         compare_devices = user_context[chat_id].get('compare_devices', [])
+
+
+        if any(device['name'] == selected_device for device in compare_devices):
+            bot.send_message(chat_id, f"Device {selected_device} is already selected.")
+            return
+       
         compare_devices.append({
             'name': selected_device,
             'id': device_id
         })
         user_context[chat_id]['compare_devices'] = compare_devices
-       
         device_number = len(compare_devices)
-        logger.debug(f"Added device {selected_device} (number {device_number}) to comparison")
-        if device_number >= 2:
+        logger.debug(f"Added device {selected_device} (number {device_number}) to comparison")        
+         
+        if device_number >=5:
+            try:
+                logger.debug(f"comparing {len(compare_devices)} devices: {[d['name'] for d in compare_devices]}")
+                measurements = []
+                for device in compare_devices:
+                    measurement = fetch_latest_measurement(device['id'])
+                    if not measurement:
+                        logger.error(f"Failed to fetch data for {device['name']} (ID: {device['id']})")
+                        raise Exception ("Failed to fetch data for {device['name']} (ID: {device['id']})")
+                    measurements.append(measurement)
+                html_content = get_comparison_formatted_data(compare_devices, measurements)
+                if html_content is None:
+                    logger.error("Failed to generate HTML content")
+                    raise Exception ("Failed to generate HTML content")
+                send_comparison_image(chat_id, html_content)
+                command_markup = get_command_menu()
+                bot.send_message(
+                        chat_id,
+                        "Comparision table sent as image above",
+                        reply_markup = command_markup
+                )
+            except Exception as e:
+                logger.error(f"Comparison error: {e}")
+                traceback.print_exc()
+                error_msg = f"Error during comparison: {str(e)}"
+                command_markup = get_command_menu()
+                bot.send_message(chat_id, error_msg, reply_markup = command_markup)
+            finally:
+                user_context[chat_id].pop('compare_mode', None)
+                user_context[chat_id].pop('compare_devices', None)
+                for key in list(user_context[chat_id].keys()):
+                    if key.startswith('compare_'):
+                        user_context[chat_id].pop(key, None)
+                logger.debug(f"Cleared comparision context for chat_id: {chat_id}")
+        
+        elif device_number >=2:
             # Send prompt to add more devices or start comparing
             markup = types.ReplyKeyboardMarkup(row_width=3, resize_keyboard=True)
+
             markup.add(types.KeyboardButton('/One_More ➕'))
             markup.add(types.KeyboardButton('/Start_Comparing ✅'))
             markup.add(types.KeyboardButton('/Cancel_Compare ❌'))
@@ -518,6 +557,9 @@ def add_one_more_device(message):
         bot.send_message(chat_id, "⚠️ Please start comparison with /Compare first.")
         return
     compare_devices = user_context[chat_id].get('compare_devices', [])
+    if len(compare_devices) >= 5:
+        return
+
     device_number = len(compare_devices) + 1
     send_location_selection_for_compare(chat_id, device_number=device_number)
 
@@ -675,11 +717,14 @@ def send_location_selection_for_compare(chat_id, device_number):
     for country in locations.keys():
         location_markup.add(types.KeyboardButton(country))
     location_markup.add(types.KeyboardButton('/Cancel_Compare ❌'))
-    bot.send_message(
-        chat_id,
-        f"Please choose a location for Device {device_number} 📍:",
-        reply_markup=location_markup
-    )
+    if device_number <=5:
+        bot.send_message(
+            chat_id,
+            f"Please choose a location for Device {device_number} 📍:",
+            reply_markup=location_markup
+        )
+    else:
+        bot.send_message(chat_id, "Maximum 5 devices is reached.")
 
 
 def send_device_selection_for_compare(chat_id, selected_country, device_number):
@@ -779,7 +824,7 @@ def handle_location(message):
             "Failed to get your location. Please try again."
         )
 
-
+"""
 def detect_weather_condition(measurement):
     temperature = measurement.get("temperature")
     humidity = measurement.get("humidity")
@@ -797,7 +842,7 @@ def detect_weather_condition(measurement):
         return "Sunny ☀️"
     else:
         return "Cloudy ☁️"
-
+"""
 
 if __name__ == "__main__":
     start_bot_thread()
@@ -806,6 +851,3 @@ if __name__ == "__main__":
 def run_bot_view(request):
     start_bot_thread()
     return JsonResponse({'status': 'Bot is running in the background!'})
-
-
-
