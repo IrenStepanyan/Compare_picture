@@ -164,4 +164,4 @@ mqtt_certificates/
 migrations/
 .DS_Store
 debug.log
-debugger.log
+debugger.log.DS_Store
